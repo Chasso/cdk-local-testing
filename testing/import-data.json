@@ -1,0 +1,16 @@
+[
+	{
+		"PK": "USER#f1e1f438-ea97-450d-bdad-26d0052c962e",
+		"SK": "USER",
+		"id": "f1e1f438-ea97-450d-bdad-26d0052c962e",
+		"firstName": "Bobbie",
+		"lastName": "Doe"
+	},
+	{
+		"PK": "USER#b56ed445-c2db-4756-8a23-ba7c3ccda11a",
+		"SK": "USER",
+		"id": "b56ed445-c2db-4756-8a23-ba7c3ccda11a",
+		"firstName": "Bobbie",
+		"lastName": "Doe"
+	}
+]
