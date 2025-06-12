@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+type HttpMethod = "get" | "post" | "put" | "delete" | "patch" | "all";
 
 function createRoute(route: string) {
 	return function (method: HttpMethod) {
@@ -11,12 +11,12 @@ function createRoute(route: string) {
 	};
 }
 
-// Factory-based decorator creators:
-export const Get = (route: string) => createRoute(route)('GET');
-export const Post = (route: string) => createRoute(route)('POST');
-export const Put = (route: string) => createRoute(route)('PUT');
-export const Patch = (route: string) => createRoute(route)('PATCH');
-export const Delete = (route: string) => createRoute(route)('DELETE');
+// Decorators for methods
+export const Get = (route: string) => createRoute(route)('get');
+export const Post = (route: string) => createRoute(route)('post');
+export const Put = (route: string) => createRoute(route)('put');
+export const Patch = (route: string) => createRoute(route)('patch');
+export const Delete = (route: string) => createRoute(route)('delete');
 
 // Decorator for classes
 export const controllers: Function[] = [];

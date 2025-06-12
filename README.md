@@ -125,30 +125,32 @@ IS_LOCAL=true
 ```ts
 import 'reflect-metadata';
 
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+type HttpMethod = "get" | "post" | "put" | "delete" | "patch" | "all";
 
 function createRoute(route: string) {
-  return function (method: HttpMethod) {
-    return function (target: any, propertyKey: string) {
-      Reflect.defineMetadata('method', method, target, propertyKey);
-      Reflect.defineMetadata('route', route, target, propertyKey);
-    };
-  };
+	return function (method: HttpMethod) {
+		return function (target: any, propertyKey: string) {
+			Reflect.defineMetadata('method', method, target, propertyKey);
+			Reflect.defineMetadata('route', route, target, propertyKey);
+		};
+	};
 }
 
-export const Get = (route: string) => createRoute(route)('GET');
-export const Post = (route: string) => createRoute(route)('POST');
-export const Put = (route: string) => createRoute(route)('PUT');
-export const Patch = (route: string) => createRoute(route)('PATCH');
-export const Delete = (route: string) => createRoute(route)('DELETE');
+// Decorators for methods
+export const Get = (route: string) => createRoute(route)('get');
+export const Post = (route: string) => createRoute(route)('post');
+export const Put = (route: string) => createRoute(route)('put');
+export const Patch = (route: string) => createRoute(route)('patch');
+export const Delete = (route: string) => createRoute(route)('delete');
 
+// Decorator for classes
 export const controllers: Function[] = [];
 export const Controller = (basePath: string): ClassDecorator => {
-  return (target) => {
-    Reflect.defineMetadata('basePath', basePath, target);
-    controllers.push(target);
-  };
-};
+	return (target) => {
+		Reflect.defineMetadata('basePath', basePath, target);
+		controllers.push(target);
+	};
+}
 ```
 
 ---
@@ -162,54 +164,78 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { globSync } from 'glob';
 
+/**
+ * Load environments from location other than the root folder. 
+ * 
+ * ? This will go out of the dist folder to find the file.
+ * ! Place it above the controllers import to make sure the variables are available in the controllers.
+ */
 dotenv.config({
-  path: path.resolve(__dirname, '..', '..', 'testing', '.env')
+	path: path.resolve(__dirname, '..', '..', 'testing', '.env')
 });
 
-globSync('../lib/stacks/lambda/code/**/*.js', { cwd: __dirname }).forEach(f =>
-  require(path.join(__dirname, f))
-);
+globSync('../lib/stacks/lambda/code/**/*.js', { cwd: __dirname }).forEach(f => require(path.join(__dirname, f)));
 
 import { controllers } from './decorators';
+// Optional service used to import test-data
+import { ServerSetupService } from './server-setup.service';
 
 const app = express();
 app.use(express.json());
 
+type HttpMethod = "get" | "post" | "put" | "delete" | "patch" | "all";
+
+// Keep track of routes to test for duplicates
 const routes: string[] = [];
 
 controllers.forEach((controller: any) => {
-  const instance = new controller();
-  const ctor = instance.constructor;
-  const base = Reflect.getMetadata('basePath', ctor) || '';
-  const prototype = Object.getPrototypeOf(instance);
-  const methodNames = Object.getOwnPropertyNames(prototype).filter(name => name !== 'constructor');
+	const instance = new (controller as any)();
+	const ctor = instance.constructor as any;
+	const base: string = Reflect.getMetadata('basePath', ctor) || '';
 
-  methodNames.forEach(methodName => {
-    const route = Reflect.getMetadata('route', prototype, methodName);
-    const httpMethod = Reflect.getMetadata('method', prototype, methodName)?.toLowerCase();
-    const fullPath = `/${[base, route].filter(Boolean).join('/')}`;
+	const prototype = Object.getPrototypeOf(instance);
+	const methodNames = Object.getOwnPropertyNames(prototype).filter(name => name !== 'constructor');
 
-    const routeId = `[${httpMethod?.toUpperCase()}] ${fullPath}`;
-    if (routes.includes(routeId)) throw new Error(`Duplicate Route: ${routeId}`);
-    routes.push(routeId);
+	methodNames.forEach(methodName => {
+		const route: string = Reflect.getMetadata('route', prototype, methodName);
+		const httpMethod: HttpMethod = Reflect.getMetadata('method', prototype, methodName)?.toLowerCase();
+		const fullPath = `/${[base, route].filter(Boolean).join('/')}`;
 
-    app[httpMethod](fullPath, async (req, res) => {
-      try {
-        req.pathParameters = req.params;
-        const result = await instance[methodName](req);
-        res.status(result.statusCode || 200).json(result.body || {});
-      } catch (e: any) {
-        res.status(500).json({ error: e.message });
-      }
-    });
+		if (fullPath && httpMethod) {
+			const route = `[${httpMethod.toUpperCase()}] ${fullPath}`;
+			const isExistingRoute = routes.includes(route);
 
-    console.log(`Registered route: ${routeId}`);
-  });
+			if (isExistingRoute) {
+				console.error(`Duplicate Route: ${route}`);
+				throw `Duplicate Route: ${route}`;
+			}
+			else routes.push(route);
+
+			app[httpMethod](fullPath, async (req: any, res: any) => {
+				try {
+					if (req.body && typeof req.body === 'object') req.body = JSON.stringify(req.body);
+					if (req.params) req.pathParameters = req.params;
+
+					const result = await instance[methodName](req);
+					if (typeof result.body === 'string') result.body = JSON.parse(result.body);
+
+					res.status(result.statusCode || 200).json(result.body || {});
+				} catch (e: any) {
+					res.status(500).json({ error: e.message });
+				}
+			});
+
+			console.log(`Registered route: [${httpMethod.toUpperCase()}] ${fullPath}`);
+		}
+	});
 });
 
-app.listen(3000, () => {
-  console.log(`Mock API server running on http://localhost:3000`);
+const PORT = 3000;
+
+app.listen(PORT, async () => {
+	console.log(`Mock API server running on http://localhost:${PORT}`);
 });
+
 ```
 
 ---
