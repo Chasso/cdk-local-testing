@@ -1,4 +1,3 @@
-
 # CDK Local Testing
 
 CDK Local Testing is a TypeScript-based boilerplate for building and testing AWS CDK applications locally. It supports rapid development with a lightweight Express server, environment configuration via .env, and a Docker-based DynamoDB setup using the single-table design pattern. Ideal for developers who want to validate their Lambda logic and infrastructure without deploying to the cloud every time.
@@ -128,12 +127,12 @@ import 'reflect-metadata';
 type HttpMethod = "get" | "post" | "put" | "delete" | "patch" | "all";
 
 function createRoute(route: string) {
-	return function (method: HttpMethod) {
-		return function (target: any, propertyKey: string) {
-			Reflect.defineMetadata('method', method, target, propertyKey);
-			Reflect.defineMetadata('route', route, target, propertyKey);
-		};
-	};
+    return function (method: HttpMethod) {
+        return function (target: any, propertyKey: string) {
+            Reflect.defineMetadata('method', method, target, propertyKey);
+            Reflect.defineMetadata('route', route, target, propertyKey);
+        };
+    };
 }
 
 // Decorators for methods
@@ -146,10 +145,10 @@ export const Delete = (route: string) => createRoute(route)('delete');
 // Decorator for classes
 export const controllers: Function[] = [];
 export const Controller = (basePath: string): ClassDecorator => {
-	return (target) => {
-		Reflect.defineMetadata('basePath', basePath, target);
-		controllers.push(target);
-	};
+    return (target) => {
+        Reflect.defineMetadata('basePath', basePath, target);
+        controllers.push(target);
+    };
 }
 ```
 
@@ -171,7 +170,7 @@ import { globSync } from 'glob';
  * ! Place it above the controllers import to make sure the variables are available in the controllers.
  */
 dotenv.config({
-	path: path.resolve(__dirname, '..', '..', 'testing', '.env')
+    path: path.resolve(__dirname, '..', '..', 'testing', '.env')
 });
 
 globSync('../lib/stacks/lambda/code/**/*.js', { cwd: __dirname }).forEach(f => require(path.join(__dirname, f)));
@@ -189,51 +188,51 @@ type HttpMethod = "get" | "post" | "put" | "delete" | "patch" | "all";
 const routes: string[] = [];
 
 controllers.forEach((controller: any) => {
-	const instance = new (controller as any)();
-	const ctor = instance.constructor as any;
-	const base: string = Reflect.getMetadata('basePath', ctor) || '';
+    const instance = new (controller as any)();
+    const ctor = instance.constructor as any;
+    const base: string = Reflect.getMetadata('basePath', ctor) || '';
+    
+    const prototype = Object.getPrototypeOf(instance);
+    const methodNames = Object.getOwnPropertyNames(prototype).filter(name => name !== 'constructor');
 
-	const prototype = Object.getPrototypeOf(instance);
-	const methodNames = Object.getOwnPropertyNames(prototype).filter(name => name !== 'constructor');
-
-	methodNames.forEach(methodName => {
-		const route: string = Reflect.getMetadata('route', prototype, methodName);
-		const httpMethod: HttpMethod = Reflect.getMetadata('method', prototype, methodName)?.toLowerCase();
-		const fullPath = `/${[base, route].filter(Boolean).join('/')}`;
-
-		if (fullPath && httpMethod) {
-			const route = `[${httpMethod.toUpperCase()}] ${fullPath}`;
-			const isExistingRoute = routes.includes(route);
-
-			if (isExistingRoute) {
-				console.error(`Duplicate Route: ${route}`);
-				throw `Duplicate Route: ${route}`;
-			}
-			else routes.push(route);
-
-			app[httpMethod](fullPath, async (req: any, res: any) => {
-				try {
-					if (req.body && typeof req.body === 'object') req.body = JSON.stringify(req.body);
-					if (req.params) req.pathParameters = req.params;
-
-					const result = await instance[methodName](req);
-					if (typeof result.body === 'string') result.body = JSON.parse(result.body);
-
-					res.status(result.statusCode || 200).json(result.body || {});
-				} catch (e: any) {
-					res.status(500).json({ error: e.message });
-				}
-			});
-
-			console.log(`Registered route: [${httpMethod.toUpperCase()}] ${fullPath}`);
-		}
-	});
+    methodNames.forEach(methodName => {
+        const route: string = Reflect.getMetadata('route', prototype, methodName);
+        const httpMethod: HttpMethod = Reflect.getMetadata('method', prototype, methodName)?.toLowerCase();
+        const fullPath = `/${[base, route].filter(Boolean).join('/')}`;
+        
+        if (fullPath && httpMethod) {
+            const route = `[${httpMethod.toUpperCase()}] ${fullPath}`;
+            const isExistingRoute = routes.includes(route);
+            
+            if (isExistingRoute) {
+                console.error(`Duplicate Route: ${route}`);
+                throw `Duplicate Route: ${route}`;
+            }
+            else routes.push(route);
+            
+            app[httpMethod](fullPath, async (req: any, res: any) => {
+                try {
+                    if (req.body && typeof req.body === 'object') req.body = JSON.stringify(req.body);
+                    if (req.params) req.pathParameters = req.params;
+                    
+                    const result = await instance[methodName](req);
+                    if (typeof result.body === 'string') result.body = JSON.parse(result.body);
+                    
+                    res.status(result.statusCode || 200).json(result.body || {});
+                } catch (e: any) {
+                    res.status(500).json({ error: e.message });
+                }
+            });
+            
+            console.log(`Registered route: [${httpMethod.toUpperCase()}] ${fullPath}`);
+        }
+    });
 });
 
 const PORT = 3000;
 
 app.listen(PORT, async () => {
-	console.log(`Mock API server running on http://localhost:${PORT}`);
+    console.log(`Mock API server running on http://localhost:${PORT}`);
 });
 
 ```
@@ -251,25 +250,25 @@ import { DynamoDbService } from "../../services/dynamodb.service";
 
 @Controller('items')
 export class ItemsGetController {
-	@Get(':id')
-	async handler(request: IRequest) {
-		try {
-			console.log('Fetching Item.');
-			const dynamoDbService = new DynamoDbService();
-			const item = await dynamoDbService.get<IItem>(request.pathParameters.id, 'ITEM', 'ITEM');
+    @Get(':id')
+    async handler(request: IRequest) {
+        try {
+            console.log('Fetching Item.');
+            const dynamoDbService = new DynamoDbService();
+            const item = await dynamoDbService.get<IItem>(request.pathParameters.id, 'ITEM', 'ITEM');
 
-			console.log('Done.');
-			return buildResponseBody(200, item, 'ALLOW');
-		} catch (error: any) {
-			console.log(`Failed to get Item with ID ${request.pathParameters.id}:`, error);
-			return buildResponseBody(500, error.message, 'ALLOW');
-		}
-	}
+            console.log('Done.');
+            return buildResponseBody(200, item, 'ALLOW');
+        } catch (error: any) {
+            console.log(`Failed to get Item with ID ${request.pathParameters.id}:`, error);
+            return buildResponseBody(500, error.message, 'ALLOW');
+        }
+    }
 }
 
 export const handler = async (request: IRequest) => {
-	const controller = new ItemsGetController();
-	return await controller.handler(request);
+    const controller = new ItemsGetController();
+    return await controller.handler(request);
 }
 ```
 
@@ -279,46 +278,46 @@ export const handler = async (request: IRequest) => {
 
 ```json
 {
-	"TableName": "dev-data",
-	"BillingMode": "PAY_PER_REQUEST",
-	"AttributeDefinitions": [
-		{
-			"AttributeName": "PK",
-			"AttributeType": "S"
-		},
-		{
-			"AttributeName": "SK",
-			"AttributeType": "S"
-		}
-	],
-	"KeySchema": [
-		{
-			"AttributeName": "PK",
-			"KeyType": "HASH"
-		},
-		{
-			"AttributeName": "SK",
-			"KeyType": "RANGE"
-		}
-	],
-	"GlobalSecondaryIndexes": [
-		{
-			"IndexName": "SK-PK-index",
-			"KeySchema": [
-				{
-					"AttributeName": "SK",
-					"KeyType": "HASH"
-				},
-				{
-					"AttributeName": "PK",
-					"KeyType": "RANGE"
-				}
-			],
-			"Projection": {
-				"ProjectionType": "ALL"
-			}
-		}
-	]
+    "TableName": "dev-data",
+    "BillingMode": "PAY_PER_REQUEST",
+    "AttributeDefinitions": [
+        {
+            "AttributeName": "PK",
+            "AttributeType": "S"
+        },
+        {
+            "AttributeName": "SK",
+            "AttributeType": "S"
+        }
+    ],
+    "KeySchema": [
+        {
+            "AttributeName": "PK",
+            "KeyType": "HASH"
+        },
+        {
+            "AttributeName": "SK",
+            "KeyType": "RANGE"
+        }
+    ],
+    "GlobalSecondaryIndexes": [
+        {
+            "IndexName": "SK-PK-index",
+            "KeySchema": [
+                {
+                    "AttributeName": "SK",
+                    "KeyType": "HASH"
+                },
+                {
+                    "AttributeName": "PK",
+                    "KeyType": "RANGE"
+                }
+            ],
+            "Projection": {
+                "ProjectionType": "ALL"
+            }
+        }
+    ]
 }
 ```
 
