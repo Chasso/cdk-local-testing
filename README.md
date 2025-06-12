@@ -1,8 +1,7 @@
 
-# CDK TypeScript Starter
+# CDK Local Testing
 
-This project is a boilerplate for deploying AWS CDK applications in TypeScript with support for local development and testing using Express and Docker-based DynamoDB.
-For DynamoDB we're using the single-table design.
+CDK Local Testing is a TypeScript-based boilerplate for building and testing AWS CDK applications locally. It supports rapid development with a lightweight Express server, environment configuration via .env, and a Docker-based DynamoDB setup using the single-table design pattern. Ideal for developers who want to validate their Lambda logic and infrastructure without deploying to the cloud every time.
 
 ![Node.js version](https://img.shields.io/badge/node-%3E=18-blue)
 
