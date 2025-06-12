@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import cors from 'cors';
 import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -22,6 +23,7 @@ import { ServerSetupService } from './server-setup.service';
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 type HttpMethod = "get" | "post" | "put" | "delete" | "patch" | "all";
 
