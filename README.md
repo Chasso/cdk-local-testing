@@ -103,6 +103,12 @@ Make sure your `package.json` includes:
 
 ---
 
+## Successful Running Example
+
+![Successful running screenshot](screenshots/server-running.png)
+
+---
+
 ## Code Examples
 
 ### `.env`
