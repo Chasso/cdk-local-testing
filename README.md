@@ -9,7 +9,7 @@ CDK Local Testing is a TypeScript-based boilerplate for building and testing AWS
 
 ## Table of Contents
 
-- [Overview](#cdk-typescript-starter)
+- [Overview](#cdk-local-testing)
 - [Useful Commands](#useful-commands)
 - [Setting Up Local DynamoDB](#setting-up-local-dynamodb)
 - [Enabling Local Testing](#enabling-local-testing)
