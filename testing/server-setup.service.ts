@@ -135,7 +135,7 @@ export class ServerSetupService {
 		for (const record of records) {
 			// Remove unwanted properties caused by the CSV format
 			for (const key in record)
-				if (!record[key].length)
+				if (!record[key].length || record[key] === 'null')
 					delete record[key];
 
 			const cmd = new PutCommand({
