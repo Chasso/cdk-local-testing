@@ -26,6 +26,9 @@ export class ServerSetupService {
 		this.client = DynamoDBDocumentClient.from(dynamoDbClient);
 	}
 
+	/**
+	 * Start the setup process for the local server.
+	 */
 	async setup() {
 		const tableNames = await this.listTables();
 
@@ -40,6 +43,11 @@ export class ServerSetupService {
 		console.groupEnd();
 	}
 
+	/**
+	 * Get a list of the DynamoDB tables on the server.
+	 * 
+	 * @returns 
+	 */
 	private async listTables() {
 		console.group('Getting list of existing tables.');
 
@@ -53,6 +61,9 @@ export class ServerSetupService {
 		return tableNames;
 	}
 
+	/**
+	 * Create a new DynamoDB table.
+	 */
 	private async createTable() {
 		console.group(`Creating DynamoDB table: ${TABLE_NAME}.`);
 
@@ -105,6 +116,9 @@ export class ServerSetupService {
 		console.groupEnd();
 	}
 
+	/**
+	 * Read a CSV file, parse the data and save it to DynamoDB.
+	 */
 	private async sourceTableFromCsv() {
 		console.group(`Sourcing DynamoDB table ${TABLE_NAME} from CSV.`);
 
@@ -121,7 +135,7 @@ export class ServerSetupService {
 		for (const record of records) {
 			const cmd = new PutCommand({
 				TableName: TABLE_NAME,
-				Item: record
+				Item: this.parseJsonPropertiesForCsvData(record)
 			});
 			await this.client.send(cmd);
 		}
@@ -130,6 +144,9 @@ export class ServerSetupService {
 		console.log(`Sourcing from CSV completed.`);
 	}
 
+	/**
+	 * Read a JSON file, parse the data and save it to DynamoDB.
+	 */
 	private async sourceTableFromJson() {
 		console.group(`Sourcing DynamoDB table ${TABLE_NAME} from JSON.`);
 
@@ -148,5 +165,96 @@ export class ServerSetupService {
 
 		console.groupEnd();
 		console.log(`Sourcing from JSON completed.`);
+	}
+
+	/**
+	 * The CSV data that was exported generally has stringified child objects that still include their DynamoDB types.
+	 * E.g. a stringified version of [{S: "John"}, {S: "Jane"}] which ideally should be ["John", "Jane"].
+	 * 
+	 * This function goes through properties and tries to at least convert the properties back to objects.
+	 * It then calls another function to try and fix the objects.
+	 * 
+	 * ! This function is currently limited to a single-level. So an object in an object will not be covered.
+	 * 
+	 * @see removeDynamoDbProperties
+	 * 
+	 * @param record 
+	 * @returns 
+	 */
+	private parseJsonPropertiesForCsvData(record: CsvRow) {
+		const output: any = {};
+
+		for (const prop in record) {
+			try {
+				// Try to parse the property as JSON.
+				output[prop] = JSON.parse(record[prop]);
+				output[prop] = this.removeDynamoDbProperties(output[prop]);
+			} catch (error) {
+				// If it could not be parsed, then use as is.
+				output[prop] = record[prop];
+			}
+		}
+
+		return output;
+	}
+
+	/**
+	 * Remove the DynamoDB object properties from the property.
+	 * 
+	 * E.g. From:
+	 * [{S: "John"}]
+	 * 
+	 * To:
+	 * ["John"]
+	 * 
+	 * @param recordProp 
+	 */
+	private removeDynamoDbProperties(recordProp: any | any[]) {
+		if (Array.isArray(recordProp)) {
+			/**
+			 * Detect if this is a straight array or an object array item.
+			 * 
+			 * A straight-array would be something like:
+			 * [{S: "John"}, {S: "Jane"}]
+			 * 
+			 * An object array would be something like:
+			 * [{firstName: {S: "John"}}, {firstName: {S: "Jane"}}]
+			 */
+			const isObjectArray = !Object.keys(recordProp[0]).some(key => ['S', 'N', 'BOOL'].includes(key));
+
+			return recordProp.map(a => {
+				if (isObjectArray) {
+					return this.parseDynamoDbProp(a);
+				}
+				else {
+					for (const key in a) {
+						if (key === 'S') return a.S;
+						else if (key === 'N') return parseFloat(a.N);
+						else if (key === 'BOOL') return a.BOOL;
+					}
+				}
+			});
+		} else {
+			return this.parseDynamoDbProp(recordProp);
+		}
+	}
+
+	/**
+	 * Parse a single property from the import data. 
+	 * 
+	 * ! This function can be updated to use recursion in case you need to go deeper than 1 level.
+	 * 
+	 * @param recordProp 
+	 * @returns 
+	 */
+	private parseDynamoDbProp(recordProp: any) {
+		const result: any = {};
+		for (const key in recordProp) {
+			const prop: any = recordProp[key];
+			if (prop.S) result[key] = prop.S;
+			else if (prop.N) result[key] = parseFloat(prop.N);
+			else if (prop.BOOL) result[key] = prop.BOOL;
+		}
+		return result;
 	}
 }
