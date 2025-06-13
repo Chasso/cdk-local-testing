@@ -133,6 +133,11 @@ export class ServerSetupService {
 		console.log(`Sourcing ${records.length} items...`);
 
 		for (const record of records) {
+			// Remove unwanted properties caused by the CSV format
+			for (const key in record)
+				if (!record[key].length)
+					delete record[key];
+
 			const cmd = new PutCommand({
 				TableName: TABLE_NAME,
 				Item: this.parseJsonPropertiesForCsvData(record)
@@ -188,7 +193,10 @@ export class ServerSetupService {
 			try {
 				// Try to parse the property as JSON.
 				output[prop] = JSON.parse(record[prop]);
-				output[prop] = this.removeDynamoDbProperties(output[prop]);
+
+				// Numbers not starting with a "0" would still be parsed, e,g, '123456789' would end up as 123456789, and we only want the next function to execute for objects.
+				if (typeof output[prop] === 'object')
+					output[prop] = this.removeDynamoDbProperties(output[prop]);
 			} catch (error) {
 				// If it could not be parsed, then use as is.
 				output[prop] = record[prop];
