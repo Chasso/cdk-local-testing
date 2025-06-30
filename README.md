@@ -65,7 +65,7 @@ CDK Local Testing is a TypeScript-based boilerplate for building and testing AWS
 Install the required dev dependencies:
 
 ```bash
-npm install --save-dev express @types/express cors @types/cors reflect-metadata dotenv glob@^9
+npm install --save-dev express @types/express cors @types/cors reflect-metadata dotenv glob
 ```
 
 - `express` – Lightweight Node.js web framework  
@@ -74,7 +74,7 @@ npm install --save-dev express @types/express cors @types/cors reflect-metadata 
 - `@types/cors` - Adds the declaration file for cors.
 - `reflect-metadata` – Enables decorators
 - `dotenv` – Loads environment variables
-- `glob@^9` – Loads all controller files. The latest version (11 at the time of documenting) causes compile issues.
+- `glob` – Loads all controller files.
 
 Create a `testing` folder and add the following files to it:
 
