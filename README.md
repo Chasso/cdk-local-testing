@@ -89,6 +89,10 @@ Run the following in your console:
 ```bash
 clear | npm run build:local | node dist/testing/server
 ```
+Mac console
+```bash
+clear && npm run build:local && node dist/testing/server.js
+```
 
 Make sure your `package.json` includes:
 
@@ -98,6 +102,14 @@ Make sure your `package.json` includes:
   "build": "tsc"
 }
 ```
+For Mac
+```json
+"scripts": {
+  "build:local": "rm -rf dist && tsc",
+    "build": "tsc",
+}
+```
+
 
 ---
 
