@@ -86,30 +86,39 @@ Create a `testing` folder and add the following files to it:
 
 Run the following in your console:
 
+---
+
+Windows Powershell & Bash
 ```bash
-clear | npm run build:local | node dist/testing/server
+clear ; npm run build:local ; node dist/testing/server
 ```
-Mac console
+Windows Cmd
+```bash
+cls && npm run build:local && node dist/testing/server
+```
+Mac
 ```bash
 clear && npm run build:local && node dist/testing/server.js
 ```
 
+---
+
 Make sure your `package.json` includes:
 
+Windows
 ```json
 "scripts": {
   "build:local": "(if exist dist rmdir /s /q dist) && tsc",
   "build": "tsc"
 }
 ```
-For Mac
+Mac
 ```json
 "scripts": {
   "build:local": "rm -rf dist && tsc",
-    "build": "tsc",
+  "build": "tsc"
 }
 ```
-
 
 ---
 
