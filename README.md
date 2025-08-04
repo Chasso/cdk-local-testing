@@ -21,8 +21,6 @@ CDK Local Testing is a TypeScript-based boilerplate for building and testing AWS
 ## Useful Commands
 
 - `npm run build` – Compile TypeScript to JavaScript  
-- `npm run watch` – Watch for changes and compile  
-- `npm run test` – Run Jest unit tests  
 - `npx cdk deploy` – Deploy the stack to your AWS account/region  
 - `npx cdk diff` – Compare deployed stack with current state  
 - `npx cdk synth` – Generate the CloudFormation template  
